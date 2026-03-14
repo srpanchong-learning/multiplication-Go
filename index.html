@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Multiplication Quest - Home Practice</title>
   <script src="/_sdk/element_sdk.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
@@ -211,7 +210,7 @@
             <ul class="text-sm text-indigo-100 space-y-2 list-disc pl-5">
               <li>Enter your name and class.</li>
               <li>Answer the set number of multiplication questions.</li>
-              <li>Your best score is saved to the shared leaderboard.</li>
+              <li>Your score is saved to the shared leaderboard.</li>
               <li>Use the same website from any device to join.</li>
             </ul>
             <div class="mt-5 grid grid-cols-2 gap-3 text-center">
@@ -383,7 +382,6 @@
       medium_label: 'Medium',
       hard_label: 'Hard',
       extreme_label: 'Extreme',
-      footer_text: 'Keep practicing to improve your skills!',
       time_limit: '15',
       questions_limit: '20'
     };
@@ -421,7 +419,7 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
 
@@ -479,25 +477,6 @@
           ['questions_limit', cfg.questions_limit || defaultConfig.questions_limit]
         ])
       });
-    }
-
-    const dataHandler = {
-      onDataChanged(data) {
-        allResults = Array.isArray(data) ? data : [];
-        populateClassFilter();
-        renderLeaderboard();
-      }
-    };
-
-    async function initializeDataSDK() {
-      if (!window.dataSdk || !window.dataSdk.init) {
-        $('leaderboard-status').textContent = 'Data SDK not found. Shared leaderboard will not load in this environment.';
-        return;
-      }
-      const result = await window.dataSdk.init(dataHandler);
-      if (!result.isOk) {
-        $('leaderboard-status').textContent = 'Failed to connect leaderboard data.';
-      }
     }
 
     function getQuestionsLimit() {
@@ -695,94 +674,96 @@
       const saveOk = await saveResult({ accuracy });
       if (saveOk) {
         $('save-status').innerHTML = '<span class="text-green-400 font-bold">Result saved to leaderboard.</span>';
+        await refreshLeaderboard();
       } else {
-        $('save-status').innerHTML = '<span class="text-yellow-300">Could not save result in this environment. The game still works.</span>';
+        $('save-status').innerHTML = '<span class="text-yellow-300">Could not save result. The game still works.</span>';
       }
     }
 
     async function saveResult({ accuracy }) {
-  try {
-    const db = window.firebaseDB;
+      try {
+        const db = window.firebaseDB;
 
-    await window.firebaseAddDoc(
-      window.firebaseCollection(db, "results"),
-      {
-        name: gameState.playerName,
-        class: gameState.playerClass,
-        score: gameState.score,
-        accuracy: accuracy,
-        difficulty: gameState.difficulty,
-        timestamp: new Date().toISOString()
+        await window.firebaseAddDoc(
+          window.firebaseCollection(db, 'results'),
+          {
+            name: gameState.playerName,
+            class: gameState.playerClass,
+            score: gameState.score,
+            accuracy: accuracy,
+            difficulty: gameState.difficulty,
+            timestamp: new Date().toISOString()
+          }
+        );
+
+        return true;
+      } catch (error) {
+        console.error('Error saving result:', error);
+        return false;
       }
-    );
-
-    return true;
-  } catch (error) {
-    console.error("Error saving result:", error);
-    return false;
-  }
-}
-   function populateClassFilter() {
-  const select = $('leaderboard-class-filter');
-  const classes = [...new Set(allResults.map(r => r.class).filter(Boolean))].sort();
-
-  select.innerHTML = '<option value="all">All Classes</option>';
-
-  classes.forEach(cls => {
-    const opt = document.createElement('option');
-    opt.value = cls;
-    opt.textContent = cls;
-    select.appendChild(opt);
-  });
-}
-
-   function getFilteredResults() {
-  const classFilter = $('leaderboard-class-filter').value;
-  const difficultyFilter = $('leaderboard-difficulty-filter').value;
-
-  const filtered = allResults.filter(item => {
-    const classMatch = classFilter === 'all' || item.class === classFilter;
-    const difficultyMatch = difficultyFilter === 'all' || item.difficulty === difficultyFilter;
-    return classMatch && difficultyMatch;
-  });
-
-  const bestByStudent = new Map();
-
-  filtered.forEach(item => {
-    const key = `${String(item.name || '').trim().toLowerCase()}__${String(item.class || '').trim().toLowerCase()}__${String(item.difficulty || '').trim().toLowerCase()}`;
-    const current = bestByStudent.get(key);
-
-    if (!current) {
-      bestByStudent.set(key, item);
-      return;
     }
 
-    const itemScore = Number(item.score || 0);
-    const currentScore = Number(current.score || 0);
-    const itemAccuracy = Number(item.accuracy || 0);
-    const currentAccuracy = Number(current.accuracy || 0);
-    const itemTime = new Date(item.timestamp || 0).getTime();
-    const currentTime = new Date(current.timestamp || 0).getTime();
+    function populateClassFilter() {
+      const select = $('leaderboard-class-filter');
+      const classes = [...new Set(allResults.map(r => r.class).filter(Boolean))].sort();
 
-    if (
-      itemScore > currentScore ||
-      (itemScore === currentScore && itemAccuracy > currentAccuracy) ||
-      (itemScore === currentScore && itemAccuracy === currentAccuracy && itemTime > currentTime)
-    ) {
-      bestByStudent.set(key, item);
+      select.innerHTML = '<option value="all">All Classes</option>';
+
+      classes.forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls;
+        opt.textContent = cls;
+        select.appendChild(opt);
+      });
     }
-  });
 
-  return [...bestByStudent.values()].sort((a, b) => {
-    const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
-    if (scoreDiff !== 0) return scoreDiff;
+    function getFilteredResults() {
+      const classFilter = $('leaderboard-class-filter').value;
+      const difficultyFilter = $('leaderboard-difficulty-filter').value;
 
-    const accuracyDiff = Number(b.accuracy || 0) - Number(a.accuracy || 0);
-    if (accuracyDiff !== 0) return accuracyDiff;
+      const filtered = allResults.filter(item => {
+        const classMatch = classFilter === 'all' || item.class === classFilter;
+        const difficultyMatch = difficultyFilter === 'all' || item.difficulty === difficultyFilter;
+        return classMatch && difficultyMatch;
+      });
 
-    return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
-  });
-}
+      const bestByStudent = new Map();
+
+      filtered.forEach(item => {
+        const key = `${String(item.name || '').trim().toLowerCase()}__${String(item.class || '').trim().toLowerCase()}__${String(item.difficulty || '').trim().toLowerCase()}`;
+        const current = bestByStudent.get(key);
+
+        if (!current) {
+          bestByStudent.set(key, item);
+          return;
+        }
+
+        const itemScore = Number(item.score || 0);
+        const currentScore = Number(current.score || 0);
+        const itemAccuracy = Number(item.accuracy || 0);
+        const currentAccuracy = Number(current.accuracy || 0);
+        const itemTime = new Date(item.timestamp || 0).getTime();
+        const currentTime = new Date(current.timestamp || 0).getTime();
+
+        if (
+          itemScore > currentScore ||
+          (itemScore === currentScore && itemAccuracy > currentAccuracy) ||
+          (itemScore === currentScore && itemAccuracy === currentAccuracy && itemTime > currentTime)
+        ) {
+          bestByStudent.set(key, item);
+        }
+      });
+
+      return [...bestByStudent.values()].sort((a, b) => {
+        const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+
+        const accuracyDiff = Number(b.accuracy || 0) - Number(a.accuracy || 0);
+        if (accuracyDiff !== 0) return accuracyDiff;
+
+        return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+      });
+    }
 
     function renderLeaderboard() {
       const tbody = $('leaderboard-body');
@@ -804,7 +785,7 @@
           <tr class="border-t border-white/10 hover:bg-white/5">
             <td class="px-4 py-3 font-bold">${index + 1}</td>
             <td class="px-4 py-3">${escapeHtml(item.name)}</td>
-            <td class="px-4 py-3">${escapeHtml(item.Class)}</td>
+            <td class="px-4 py-3">${escapeHtml(item.class)}</td>
             <td class="px-4 py-3 font-bold">${Number(item.score || 0)}</td>
             <td class="px-4 py-3">${Number(item.accuracy || 0)}%</td>
             <td class="px-4 py-3 capitalize">${escapeHtml(item.difficulty)}</td>
@@ -836,8 +817,25 @@
 
     async function refreshLeaderboard() {
       $('leaderboard-status').textContent = 'Refreshing leaderboard...';
-      renderLeaderboard();
-      $('leaderboard-status').textContent = 'Leaderboard updated.';
+
+      try {
+        const db = window.firebaseDB;
+        const snapshot = await window.firebaseGetDocs(
+          window.firebaseCollection(db, 'results')
+        );
+
+        allResults = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        populateClassFilter();
+        renderLeaderboard();
+        $('leaderboard-status').textContent = 'Leaderboard updated.';
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        $('leaderboard-status').textContent = 'Failed to load leaderboard.';
+      }
     }
 
     document.querySelectorAll('#setup-difficulty-buttons .difficulty-btn').forEach(btn => {
@@ -845,13 +843,13 @@
     });
 
     $('start-btn').addEventListener('click', startSession);
-    $('view-leaderboard-btn').addEventListener('click', () => {
+    $('view-leaderboard-btn').addEventListener('click', async () => {
+      await refreshLeaderboard();
       showScreen('leaderboard-screen');
-      renderLeaderboard();
     });
-    $('open-leaderboard-btn').addEventListener('click', () => {
+    $('open-leaderboard-btn').addEventListener('click', async () => {
+      await refreshLeaderboard();
       showScreen('leaderboard-screen');
-      renderLeaderboard();
     });
     $('back-home-btn').addEventListener('click', () => showScreen('setup-screen'));
     $('play-again-btn').addEventListener('click', () => showScreen('setup-screen'));
@@ -869,35 +867,36 @@
 
     async function init() {
       initializeElementSDK();
-      // await initializeDataSDK();
       onConfigChange(config);
       resetGameState();
+      await refreshLeaderboard();
       showScreen('setup-screen');
     }
 
     init();
   </script>
- <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDfZ4sDgU__VZ4KBObGT-NdJdPTkMMuGXA",
-  authDomain: "multiplication-go.firebaseapp.com",
-  projectId: "multiplication-go",
-  storageBucket: "multiplication-go.firebasestorage.app",
-  messagingSenderId: "875555187291",
-  appId: "1:875555187291:web:18a9f5fdd322a58a6e6d7e",
-  measurementId: "G-JTVP3MH20X"
-};
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js';
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDfZ4sDgU__VZ4KBObGT-NdJdPTkMMuGXA',
+      authDomain: 'multiplication-go.firebaseapp.com',
+      projectId: 'multiplication-go',
+      storageBucket: 'multiplication-go.firebasestorage.app',
+      messagingSenderId: '875555187291',
+      appId: '1:875555187291:web:18a9f5fdd322a58a6e6d7e',
+      measurementId: 'G-JTVP3MH20X'
+    };
 
-window.firebaseDB = db;
-window.firebaseAddDoc = addDoc;
-window.firebaseCollection = collection;
-window.firebaseGetDocs = getDocs;
-</script>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.firebaseDB = db;
+    window.firebaseAddDoc = addDoc;
+    window.firebaseCollection = collection;
+    window.firebaseGetDocs = getDocs;
+  </script>
 </body>
 </html>
