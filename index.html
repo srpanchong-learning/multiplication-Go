@@ -701,28 +701,27 @@
     }
 
     async function saveResult({ accuracy }) {
-      try {
-        if (!window.dataSdk || !window.dataSdk.create) return false;
-        const payload = {
-          type: 'multiplication_result',
-          name: gameState.playerName,
-          studentClass: gameState.playerClass,
-          difficulty: gameState.difficulty,
-          score: gameState.score,
-          accuracy,
-          maxStreak: gameState.maxStreak,
-          totalQuestions: gameState.totalQuestions,
-          correctAnswers: gameState.correctAnswers,
-          timestamp: new Date().toISOString()
-        };
-        const result = await window.dataSdk.create(payload);
-        return !!result.isOk;
-      } catch (error) {
-        console.error('Save failed', error);
-        return false;
-      }
-    }
+  try {
+    const db = window.firebaseDB;
 
+    await window.firebaseAddDoc(
+      window.firebaseCollection(db, "results"),
+      {
+        name: gameState.playerName,
+        class: gameState.playerClass,
+        score: gameState.score,
+        accuracy: accuracy,
+        difficulty: gameState.difficulty,
+        timestamp: new Date().toISOString()
+      }
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Error saving result:", error);
+    return false;
+  }
+}
     function populateClassFilter() {
       const select = $('leaderboard-class-filter');
       const existing = new Set(['all']);
