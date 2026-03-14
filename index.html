@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiplication Quest - Home Practice</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+    * { font-family: 'Space Mono', monospace; }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e1b4b;
+      --bg-tertiary: #312e81;
+      --accent-primary: #6366f1;
+      --accent-secondary: #8b5cf6;
+      --success-color: #10b981;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --text-primary: #ffffff;
+      --text-secondary: #a5b4fc;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+      color: var(--text-primary);
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.35);
+    }
+
+    .difficulty-btn {
+      transition: all 0.25s ease;
+      border-radius: 14px;
+    }
+
+    .difficulty-btn.active {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .difficulty-btn:not(.active) {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .difficulty-btn:hover { transform: translateY(-2px); }
+
+    .input-field, .select-field {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(99, 102, 241, 0.45);
+      transition: all 0.25s ease;
+      color: white;
+      border-radius: 14px;
+    }
+
+    .input-field:focus, .select-field:focus {
+      background: rgba(255,255,255,0.16);
+      border-color: var(--accent-primary);
+      outline: none;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+      transition: all 0.25s ease;
+      border-radius: 14px;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+    }
+
+    .secondary-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      transition: all 0.25s ease;
+    }
+
+    .secondary-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.16);
+      transform: translateY(-2px);
+    }
+
+    .primary-btn:disabled, .secondary-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .stat-box {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    .pop-in { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .shake { animation: shake 0.35s ease-in-out; }
+    .pulse-correct { animation: pulseCorrect 0.6s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    @keyframes pulseCorrect {
+      0% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+      50% { box-shadow: 0 0 28px rgba(16,185,129,0.55); }
+      100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+    }
+
+    .hidden-screen { display: none; }
+    .table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 999px; }
+  </style>
+</head>
+<body class="h-full overflow-hidden">
+  <main class="h-full w-full overflow-auto">
+    <div class="max-w-6xl mx-auto px-4 py-8 md:px-6 md:py-10">
+      <header class="text-center mb-8 fade-in">
+        <h1 id="title-display" class="text-4xl md:text-5xl font-bold mb-2">⚡ Multiplication Quest</h1>
+        <p id="subtitle-display" class="text-indigo-200 text-base md:text-lg">Home practice with shared leaderboard</p>
+      </header>
+
+      <section id="setup-screen" class="max-w-3xl mx-auto panel p-6 md:p-8 fade-in">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h2 class="text-2xl font-bold mb-4">Start Practice</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-indigo-200 mb-2">Student Name</label>
+                <input id="player-name" class="input-field w-full px-4 py-3" type="text" maxlength="40" placeholder="Enter name" />
+              </div>
+              <div>
+                <label class="block text-sm text-indigo-200 mb-2">Class</label>
+                <select id="player-class" class="select-field w-full px-4 py-3">
+                  <option value="">Select class</option>
+                  <option>Year 2 Aman</option>
+                  <option>Year 2 Bestari</option>
+                  <option>Year 3 Aman</option>
+                  <option>Year 3 Bestari</option>
+                  <option>Year 4 Aman</option>
+                  <option>Year 4 Bestari</option>
+                  <option>Year 5 Aman</option>
+                  <option>Year 5 Bestari</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm text-indigo-200 mb-2">Difficulty</label>
+                <div class="grid grid-cols-2 gap-3" id="setup-difficulty-buttons">
+                  <button class="difficulty-btn active text-white font-bold py-3 px-4" data-difficulty="easy">
+                    <span class="difficulty-label">Easy</span><br><span class="text-xs font-normal">1-10</span>
+                  </button>
+                  <button class="difficulty-btn text-white font-bold py-3 px-4" data-difficulty="medium">
+                    <span class="difficulty-label">Medium</span><br><span class="text-xs font-normal">1-12</span>
+                  </button>
+                  <button class="difficulty-btn text-white font-bold py-3 px-4" data-difficulty="hard">
+                    <span class="difficulty-label">Hard</span><br><span class="text-xs font-normal">1-15</span>
+                  </button>
+                  <button class="difficulty-btn text-white font-bold py-3 px-4" data-difficulty="extreme">
+                    <span class="difficulty-label">Extreme</span><br><span class="text-xs font-normal">1-20</span>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button id="start-btn" class="primary-btn text-white font-bold px-6 py-3 w-full sm:w-auto">Start Practice</button>
+                <button id="view-leaderboard-btn" class="secondary-btn text-white font-bold px-6 py-3 w-full sm:w-auto">View Leaderboard</button>
+              </div>
+              <div id="setup-feedback" class="text-sm min-h-[24px]"></div>
+            </div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <h3 class="text-xl font-bold mb-3">How it works</h3>
+            <ul class="text-sm text-indigo-100 space-y-2 list-disc pl-5">
+              <li>Enter your name and class.</li>
+              <li>Answer the set number of multiplication questions.</li>
+              <li>Your best score is saved to the shared leaderboard.</li>
+              <li>Use the same website from any device to join.</li>
+            </ul>
+            <div class="mt-5 grid grid-cols-2 gap-3 text-center">
+              <div class="stat-box">
+                <div class="text-indigo-300 text-xs mb-1">Questions</div>
+                <div id="setup-questions-display" class="text-2xl font-bold">20</div>
+              </div>
+              <div class="stat-box">
+                <div class="text-indigo-300 text-xs mb-1">Time Each</div>
+                <div id="setup-time-display" class="text-2xl font-bold">15s</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="game-screen" class="hidden-screen">
+        <div class="grid lg:grid-cols-[2fr_1fr] gap-6 items-start">
+          <div class="space-y-6">
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Player</div>
+                <div id="player-display" class="text-sm md:text-base font-bold break-words">-</div>
+              </div>
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Class</div>
+                <div id="class-display" class="text-sm md:text-base font-bold break-words">-</div>
+              </div>
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Score</div>
+                <div id="score-display" class="text-3xl font-bold">0</div>
+              </div>
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Streak</div>
+                <div id="streak-display" class="text-3xl font-bold">0</div>
+              </div>
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Qns</div>
+                <div id="questions-display" class="text-3xl font-bold">0</div>
+              </div>
+              <div class="stat-box text-center">
+                <div class="text-indigo-300 text-xs mb-1">Time</div>
+                <div id="timer-display" class="text-3xl font-bold">15s</div>
+              </div>
+            </div>
+
+            <div id="problem-card" class="hero-card pop-in p-6">
+              <div class="text-5xl md:text-6xl font-bold text-white text-center">
+                <span id="num1">7</span> × <span id="num2">8</span>
+              </div>
+            </div>
+
+            <div class="panel p-5 md:p-6">
+              <div class="flex flex-col sm:flex-row gap-3 mb-3">
+                <input id="answer-input" type="number" class="input-field flex-1 text-white text-center text-2xl font-bold px-4 py-4" placeholder="Your answer" autocomplete="off" />
+                <button id="check-btn" class="primary-btn text-white font-bold py-4 px-8 text-lg">Check</button>
+              </div>
+              <div id="feedback" class="text-center text-sm min-h-[24px]"></div>
+            </div>
+          </div>
+
+          <aside class="panel p-5 md:p-6">
+            <h3 class="text-xl font-bold mb-4">Session Progress</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between"><span class="text-indigo-200">Accuracy</span><strong id="accuracy-display">0%</strong></div>
+              <div class="flex justify-between"><span class="text-indigo-200">Max Streak</span><strong id="max-streak-display">0</strong></div>
+              <div class="flex justify-between"><span class="text-indigo-200">Difficulty</span><strong id="difficulty-display">Easy</strong></div>
+              <div class="flex justify-between"><span class="text-indigo-200">Remaining</span><strong id="remaining-display">20</strong></div>
+            </div>
+            <div class="mt-6 pt-5 border-t border-white/10">
+              <button id="quit-btn" class="secondary-btn text-white font-bold px-4 py-3 w-full">Quit Session</button>
+            </div>
+            <div class="mt-6 text-xs text-indigo-300">
+              Results are saved when the session finishes.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="result-screen" class="hidden-screen max-w-3xl mx-auto panel p-6 md:p-8 text-center fade-in">
+        <h2 class="text-3xl font-bold mb-3">🎉 Practice Complete</h2>
+        <p class="text-indigo-200 mb-6">Great effort. Your result has been recorded.</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <div class="stat-box"><div class="text-indigo-300 text-xs mb-1">Name</div><div id="result-name" class="font-bold"></div></div>
+          <div class="stat-box"><div class="text-indigo-300 text-xs mb-1">Score</div><div id="result-score" class="font-bold text-2xl"></div></div>
+          <div class="stat-box"><div class="text-indigo-300 text-xs mb-1">Accuracy</div><div id="result-accuracy" class="font-bold text-2xl"></div></div>
+          <div class="stat-box"><div class="text-indigo-300 text-xs mb-1">Best Streak</div><div id="result-streak" class="font-bold text-2xl"></div></div>
+        </div>
+        <div id="save-status" class="text-sm min-h-[24px] mb-5"></div>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button id="play-again-btn" class="primary-btn text-white font-bold px-6 py-3">Play Again</button>
+          <button id="open-leaderboard-btn" class="secondary-btn text-white font-bold px-6 py-3">Open Leaderboard</button>
+        </div>
+      </section>
+
+      <section id="leaderboard-screen" class="hidden-screen panel p-5 md:p-6 fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+          <div>
+            <h2 class="text-3xl font-bold">🏆 Leaderboard</h2>
+            <p class="text-indigo-200 text-sm mt-1">Best results saved from the same website across devices.</p>
+          </div>
+          <div class="grid sm:grid-cols-3 gap-3 w-full lg:w-auto">
+            <div>
+              <label class="block text-xs text-indigo-200 mb-1">Class Filter</label>
+              <select id="leaderboard-class-filter" class="select-field w-full px-3 py-2 text-sm">
+                <option value="all">All Classes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-indigo-200 mb-1">Difficulty Filter</label>
+              <select id="leaderboard-difficulty-filter" class="select-field w-full px-3 py-2 text-sm">
+                <option value="all">All Difficulties</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="extreme">Extreme</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button id="refresh-leaderboard-btn" class="secondary-btn text-white font-bold px-4 py-2 w-full">Refresh</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-[2fr_1fr] gap-6">
+          <div class="overflow-auto table-scroll rounded-2xl border border-white/10">
+            <table class="w-full text-sm">
+              <thead class="bg-white/10 text-left">
+                <tr>
+                  <th class="px-4 py-3">Rank</th>
+                  <th class="px-4 py-3">Name</th>
+                  <th class="px-4 py-3">Class</th>
+                  <th class="px-4 py-3">Score</th>
+                  <th class="px-4 py-3">Accuracy</th>
+                  <th class="px-4 py-3">Difficulty</th>
+                  <th class="px-4 py-3">When</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-body"></tbody>
+            </table>
+          </div>
+
+          <div class="space-y-4">
+            <div class="stat-box text-center">
+              <div class="text-indigo-300 text-xs mb-1">Total Saved Results</div>
+              <div id="leaderboard-total" class="text-3xl font-bold">0</div>
+            </div>
+            <div class="stat-box text-center">
+              <div class="text-indigo-300 text-xs mb-1">Top Score</div>
+              <div id="leaderboard-top-score" class="text-3xl font-bold">0</div>
+            </div>
+            <div class="stat-box text-center">
+              <div class="text-indigo-300 text-xs mb-1">Top Player</div>
+              <div id="leaderboard-top-player" class="text-lg font-bold break-words">-</div>
+            </div>
+            <button id="back-home-btn" class="primary-btn text-white font-bold px-4 py-3 w-full">Back Home</button>
+            <p id="leaderboard-status" class="text-xs text-indigo-300 min-h-[20px]"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const defaultConfig = {
+      title_text: '⚡ Multiplication Quest',
+      subtitle_text: 'Home practice with shared leaderboard',
+      easy_label: 'Easy',
+      medium_label: 'Medium',
+      hard_label: 'Hard',
+      extreme_label: 'Extreme',
+      footer_text: 'Keep practicing to improve your skills!',
+      time_limit: '15',
+      questions_limit: '20'
+    };
+
+    let config = { ...defaultConfig };
+    let allResults = [];
+
+    const difficultyRanges = {
+      easy: { min: 1, max: 10, points: 10, label: 'Easy' },
+      medium: { min: 1, max: 12, points: 20, label: 'Medium' },
+      hard: { min: 1, max: 15, points: 30, label: 'Hard' },
+      extreme: { min: 1, max: 20, points: 50, label: 'Extreme' }
+    };
+
+    const gameState = {
+      playerName: '',
+      playerClass: '',
+      difficulty: 'easy',
+      score: 0,
+      streak: 0,
+      maxStreak: 0,
+      totalQuestions: 0,
+      correctAnswers: 0,
+      currentAnswer: null,
+      isLoading: false,
+      timeRemaining: 15,
+      timerInterval: null,
+      gameFinished: false
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showScreen(screenId) {
+      ['setup-screen', 'game-screen', 'result-screen', 'leaderboard-screen'].forEach(id => {
+        $(id).classList.add('hidden-screen');
+      });
+      $(screenId).classList.remove('hidden-screen');
+    }
+
+    function onConfigChange(newConfig) {
+      config = { ...defaultConfig, ...newConfig };
+      $('title-display').textContent = config.title_text || defaultConfig.title_text;
+      $('subtitle-display').textContent = config.subtitle_text || defaultConfig.subtitle_text;
+      $('setup-time-display').textContent = `${getTimeLimit()}s`;
+      $('setup-questions-display').textContent = getQuestionsLimit();
+
+      const labels = {
+        easy: config.easy_label || defaultConfig.easy_label,
+        medium: config.medium_label || defaultConfig.medium_label,
+        hard: config.hard_label || defaultConfig.hard_label,
+        extreme: config.extreme_label || defaultConfig.extreme_label
+      };
+
+      document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        const diff = btn.dataset.difficulty;
+        const labelNode = btn.querySelector('.difficulty-label');
+        if (labelNode) labelNode.textContent = labels[diff];
+      });
+
+      updateDifficultyDisplay();
+      updateTimerDisplay();
+      updateStatsDisplay();
+    }
+
+    async function initializeElementSDK() {
+      if (!window.elementSdk) return;
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: () => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: cfg => new Map([
+          ['title_text', cfg.title_text || defaultConfig.title_text],
+          ['subtitle_text', cfg.subtitle_text || defaultConfig.subtitle_text],
+          ['easy_label', cfg.easy_label || defaultConfig.easy_label],
+          ['medium_label', cfg.medium_label || defaultConfig.medium_label],
+          ['hard_label', cfg.hard_label || defaultConfig.hard_label],
+          ['extreme_label', cfg.extreme_label || defaultConfig.extreme_label],
+          ['time_limit', cfg.time_limit || defaultConfig.time_limit],
+          ['questions_limit', cfg.questions_limit || defaultConfig.questions_limit]
+        ])
+      });
+    }
+
+    const dataHandler = {
+      onDataChanged(data) {
+        allResults = Array.isArray(data) ? data : [];
+        populateClassFilter();
+        renderLeaderboard();
+      }
+    };
+
+    async function initializeDataSDK() {
+      if (!window.dataSdk || !window.dataSdk.init) {
+        $('leaderboard-status').textContent = 'Data SDK not found. Shared leaderboard will not load in this environment.';
+        return;
+      }
+      const result = await window.dataSdk.init(dataHandler);
+      if (!result.isOk) {
+        $('leaderboard-status').textContent = 'Failed to connect leaderboard data.';
+      }
+    }
+
+    function getQuestionsLimit() {
+      return Math.max(1, parseInt(config.questions_limit || defaultConfig.questions_limit, 10) || 20);
+    }
+
+    function getTimeLimit() {
+      return Math.max(3, parseInt(config.time_limit || defaultConfig.time_limit, 10) || 15);
+    }
+
+    function updateDifficultyDisplay() {
+      $('difficulty-display').textContent = difficultyRanges[gameState.difficulty].label;
+    }
+
+    function resetGameState() {
+      gameState.score = 0;
+      gameState.streak = 0;
+      gameState.maxStreak = 0;
+      gameState.totalQuestions = 0;
+      gameState.correctAnswers = 0;
+      gameState.currentAnswer = null;
+      gameState.isLoading = false;
+      gameState.timeRemaining = getTimeLimit();
+      gameState.gameFinished = false;
+      clearTimer();
+      $('answer-input').disabled = false;
+      $('check-btn').disabled = false;
+      $('feedback').innerHTML = '';
+      updateStatsDisplay();
+      updateTimerDisplay();
+      updateDifficultyDisplay();
+    }
+
+    function startSession() {
+      const name = $('player-name').value.trim();
+      const playerClass = $('player-class').value.trim();
+      const feedbackEl = $('setup-feedback');
+
+      if (!name) {
+        feedbackEl.innerHTML = '<span class="text-yellow-300">Please enter a student name.</span>';
+        return;
+      }
+      if (!playerClass) {
+        feedbackEl.innerHTML = '<span class="text-yellow-300">Please select a class.</span>';
+        return;
+      }
+
+      gameState.playerName = name;
+      gameState.playerClass = playerClass;
+      $('player-display').textContent = name;
+      $('class-display').textContent = playerClass;
+      feedbackEl.innerHTML = '';
+
+      resetGameState();
+      showScreen('game-screen');
+      generateProblem();
+      $('answer-input').focus();
+    }
+
+    function generateProblem() {
+      if (gameState.gameFinished) return;
+      const range = difficultyRanges[gameState.difficulty];
+      const num1 = randomInt(range.min, range.max);
+      const num2 = randomInt(range.min, range.max);
+      gameState.currentAnswer = num1 * num2;
+      $('num1').textContent = num1;
+      $('num2').textContent = num2;
+      $('answer-input').value = '';
+      $('feedback').innerHTML = '';
+      $('problem-card').classList.remove('shake', 'pulse-correct');
+      startTimer();
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function startTimer() {
+      clearTimer();
+      gameState.timeRemaining = getTimeLimit();
+      updateTimerDisplay();
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeRemaining -= 1;
+        updateTimerDisplay();
+        if (gameState.timeRemaining <= 0) {
+          clearTimer();
+          timeExpired();
+        }
+      }, 1000);
+    }
+
+    function clearTimer() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const timerEl = $('timer-display');
+      timerEl.textContent = `${gameState.timeRemaining}s`;
+      timerEl.classList.remove('text-white', 'text-yellow-400', 'text-red-400');
+      if (gameState.timeRemaining <= 3) timerEl.classList.add('text-red-400');
+      else if (gameState.timeRemaining <= 5) timerEl.classList.add('text-yellow-400');
+      else timerEl.classList.add('text-white');
+    }
+
+    function updateStatsDisplay() {
+      $('score-display').textContent = gameState.score;
+      $('streak-display').textContent = gameState.streak;
+      $('questions-display').textContent = gameState.totalQuestions;
+      $('max-streak-display').textContent = gameState.maxStreak;
+      const accuracy = gameState.totalQuestions > 0
+        ? Math.round((gameState.correctAnswers / gameState.totalQuestions) * 100)
+        : 0;
+      $('accuracy-display').textContent = `${accuracy}%`;
+      $('remaining-display').textContent = Math.max(0, getQuestionsLimit() - gameState.totalQuestions);
+    }
+
+    function timeExpired() {
+      $('feedback').innerHTML = `<span class="text-red-400 font-bold">⏱ Time's up. Answer: ${gameState.currentAnswer}</span>`;
+      $('problem-card').classList.add('shake');
+      gameState.streak = 0;
+      gameState.totalQuestions += 1;
+      updateStatsDisplay();
+      checkGameEnd();
+      setTimeout(() => {
+        $('problem-card').classList.remove('shake');
+        if (!gameState.gameFinished) generateProblem();
+      }, 1000);
+    }
+
+    async function checkAnswer() {
+      if (gameState.isLoading || gameState.gameFinished) return;
+      clearTimer();
+      const userAnswer = parseInt($('answer-input').value, 10);
+      if (Number.isNaN(userAnswer)) {
+        $('feedback').innerHTML = '<span class="text-yellow-300">Please enter a number.</span>';
+        startTimer();
+        return;
+      }
+
+      gameState.isLoading = true;
+      $('check-btn').disabled = true;
+      gameState.totalQuestions += 1;
+
+      if (userAnswer === gameState.currentAnswer) {
+        gameState.correctAnswers += 1;
+        gameState.streak += 1;
+        gameState.maxStreak = Math.max(gameState.maxStreak, gameState.streak);
+        const points = difficultyRanges[gameState.difficulty].points;
+        gameState.score += points;
+        $('feedback').innerHTML = `<span class="text-green-400 font-bold">✓ Correct. +${points} points</span>`;
+        $('problem-card').classList.add('pulse-correct');
+      } else {
+        gameState.streak = 0;
+        $('feedback').innerHTML = `<span class="text-red-400 font-bold">✗ Wrong. Answer: ${gameState.currentAnswer}</span>`;
+        $('problem-card').classList.add('shake');
+      }
+
+      updateStatsDisplay();
+      checkGameEnd();
+
+      setTimeout(() => {
+        $('problem-card').classList.remove('pulse-correct', 'shake');
+        if (!gameState.gameFinished) generateProblem();
+        gameState.isLoading = false;
+        $('check-btn').disabled = false;
+      }, 900);
+    }
+
+    function checkGameEnd() {
+      if (gameState.totalQuestions >= getQuestionsLimit()) {
+        endGame();
+      }
+    }
+
+    async function endGame() {
+      gameState.gameFinished = true;
+      clearTimer();
+      $('answer-input').disabled = true;
+      $('check-btn').disabled = true;
+
+      const accuracy = gameState.totalQuestions > 0
+        ? Math.round((gameState.correctAnswers / gameState.totalQuestions) * 100)
+        : 0;
+
+      $('result-name').textContent = gameState.playerName;
+      $('result-score').textContent = gameState.score;
+      $('result-accuracy').textContent = `${accuracy}%`;
+      $('result-streak').textContent = gameState.maxStreak;
+      $('save-status').innerHTML = '<span class="text-indigo-200">Saving result...</span>';
+      showScreen('result-screen');
+
+      const saveOk = await saveResult({ accuracy });
+      if (saveOk) {
+        $('save-status').innerHTML = '<span class="text-green-400 font-bold">Result saved to leaderboard.</span>';
+      } else {
+        $('save-status').innerHTML = '<span class="text-yellow-300">Could not save result in this environment. The game still works.</span>';
+      }
+    }
+
+    async function saveResult({ accuracy }) {
+      try {
+        if (!window.dataSdk || !window.dataSdk.create) return false;
+        const payload = {
+          type: 'multiplication_result',
+          name: gameState.playerName,
+          studentClass: gameState.playerClass,
+          difficulty: gameState.difficulty,
+          score: gameState.score,
+          accuracy,
+          maxStreak: gameState.maxStreak,
+          totalQuestions: gameState.totalQuestions,
+          correctAnswers: gameState.correctAnswers,
+          timestamp: new Date().toISOString()
+        };
+        const result = await window.dataSdk.create(payload);
+        return !!result.isOk;
+      } catch (error) {
+        console.error('Save failed', error);
+        return false;
+      }
+    }
+
+    function populateClassFilter() {
+      const select = $('leaderboard-class-filter');
+      const existing = new Set(['all']);
+      Array.from(select.options).forEach(opt => existing.add(opt.value));
+      const classes = [...new Set(allResults.map(r => r.studentClass).filter(Boolean))].sort();
+      select.innerHTML = '<option value="all">All Classes</option>';
+      classes.forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls;
+        opt.textContent = cls;
+        select.appendChild(opt);
+      });
+    }
+
+    function getFilteredResults() {
+      const classFilter = $('leaderboard-class-filter').value;
+      const difficultyFilter = $('leaderboard-difficulty-filter').value;
+
+      const onlyGameResults = allResults.filter(item => item && item.type === 'multiplication_result');
+
+      const filtered = onlyGameResults.filter(item => {
+        const classMatch = classFilter === 'all' || item.studentClass === classFilter;
+        const difficultyMatch = difficultyFilter === 'all' || item.difficulty === difficultyFilter;
+        return classMatch && difficultyMatch;
+      });
+
+      const bestByStudent = new Map();
+      filtered.forEach(item => {
+        const key = `${String(item.name || '').trim().toLowerCase()}__${String(item.studentClass || '').trim().toLowerCase()}__${String(item.difficulty || '').trim().toLowerCase()}`;
+        const current = bestByStudent.get(key);
+        if (!current) {
+          bestByStudent.set(key, item);
+          return;
+        }
+        const itemScore = Number(item.score || 0);
+        const currentScore = Number(current.score || 0);
+        const itemAccuracy = Number(item.accuracy || 0);
+        const currentAccuracy = Number(current.accuracy || 0);
+        const itemTime = new Date(item.timestamp || 0).getTime();
+        const currentTime = new Date(current.timestamp || 0).getTime();
+
+        if (
+          itemScore > currentScore ||
+          (itemScore === currentScore && itemAccuracy > currentAccuracy) ||
+          (itemScore === currentScore && itemAccuracy === currentAccuracy && itemTime > currentTime)
+        ) {
+          bestByStudent.set(key, item);
+        }
+      });
+
+      return [...bestByStudent.values()].sort((a, b) => {
+        const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        const accuracyDiff = Number(b.accuracy || 0) - Number(a.accuracy || 0);
+        if (accuracyDiff !== 0) return accuracyDiff;
+        return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+      });
+    }
+
+    function renderLeaderboard() {
+      const tbody = $('leaderboard-body');
+      const results = getFilteredResults();
+      $('leaderboard-total').textContent = results.length;
+
+      if (results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-indigo-200">No results yet.</td></tr>';
+        $('leaderboard-top-score').textContent = '0';
+        $('leaderboard-top-player').textContent = '-';
+        return;
+      }
+
+      $('leaderboard-top-score').textContent = results[0].score || 0;
+      $('leaderboard-top-player').textContent = results[0].name || '-';
+
+      tbody.innerHTML = results.map((item, index) => {
+        return `
+          <tr class="border-t border-white/10 hover:bg-white/5">
+            <td class="px-4 py-3 font-bold">${index + 1}</td>
+            <td class="px-4 py-3">${escapeHtml(item.name)}</td>
+            <td class="px-4 py-3">${escapeHtml(item.studentClass)}</td>
+            <td class="px-4 py-3 font-bold">${Number(item.score || 0)}</td>
+            <td class="px-4 py-3">${Number(item.accuracy || 0)}%</td>
+            <td class="px-4 py-3 capitalize">${escapeHtml(item.difficulty)}</td>
+            <td class="px-4 py-3">${formatDate(item.timestamp)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+    }
+
+    function setDifficultyFromButton(button) {
+      document.querySelectorAll('#setup-difficulty-buttons .difficulty-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      gameState.difficulty = button.dataset.difficulty;
+      updateDifficultyDisplay();
+    }
+
+    function quitSession() {
+      clearTimer();
+      resetGameState();
+      showScreen('setup-screen');
+    }
+
+    async function refreshLeaderboard() {
+      $('leaderboard-status').textContent = 'Refreshing leaderboard...';
+      renderLeaderboard();
+      $('leaderboard-status').textContent = 'Leaderboard updated.';
+    }
+
+    document.querySelectorAll('#setup-difficulty-buttons .difficulty-btn').forEach(btn => {
+      btn.addEventListener('click', () => setDifficultyFromButton(btn));
+    });
+
+    $('start-btn').addEventListener('click', startSession);
+    $('view-leaderboard-btn').addEventListener('click', () => {
+      showScreen('leaderboard-screen');
+      renderLeaderboard();
+    });
+    $('open-leaderboard-btn').addEventListener('click', () => {
+      showScreen('leaderboard-screen');
+      renderLeaderboard();
+    });
+    $('back-home-btn').addEventListener('click', () => showScreen('setup-screen'));
+    $('play-again-btn').addEventListener('click', () => showScreen('setup-screen'));
+    $('refresh-leaderboard-btn').addEventListener('click', refreshLeaderboard);
+    $('leaderboard-class-filter').addEventListener('change', renderLeaderboard);
+    $('leaderboard-difficulty-filter').addEventListener('change', renderLeaderboard);
+    $('check-btn').addEventListener('click', checkAnswer);
+    $('quit-btn').addEventListener('click', quitSession);
+    $('answer-input').addEventListener('keypress', e => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+    $('player-name').addEventListener('keypress', e => {
+      if (e.key === 'Enter') startSession();
+    });
+
+    async function init() {
+      initializeElementSDK();
+      await initializeDataSDK();
+      onConfigChange(config);
+      resetGameState();
+      showScreen('setup-screen');
+    }
+
+    init();
+  </script>
+</body>
+</html>
