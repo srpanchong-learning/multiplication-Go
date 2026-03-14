@@ -875,5 +875,27 @@
 
     init();
   </script>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDfZ4sDgU__VZ4KBObGT-NdJdPTkMMuGXA",
+  authDomain: "multiplication-go.firebaseapp.com",
+  projectId: "multiplication-go",
+  storageBucket: "multiplication-go.firebasestorage.app",
+  messagingSenderId: "875555187291",
+  appId: "1:875555187291:web:18a9f5fdd322a58a6e6d7e",
+  measurementId: "G-JTVP3MH20X"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.firebaseDB = db;
+window.firebaseAddDoc = addDoc;
+window.firebaseCollection = collection;
+window.firebaseGetDocs = getDocs;
+</script>
 </body>
 </html>
