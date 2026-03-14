@@ -722,64 +722,67 @@
     return false;
   }
 }
-    function populateClassFilter() {
-      const select = $('leaderboard-class-filter');
-      const existing = new Set(['all']);
-      Array.from(select.options).forEach(opt => existing.add(opt.value));
-      const classes = [...new Set(allResults.map(r => r.studentClass).filter(Boolean))].sort();
-      select.innerHTML = '<option value="all">All Classes</option>';
-      classes.forEach(cls => {
-        const opt = document.createElement('option');
-        opt.value = cls;
-        opt.textContent = cls;
-        select.appendChild(opt);
-      });
+   function populateClassFilter() {
+  const select = $('leaderboard-class-filter');
+  const classes = [...new Set(allResults.map(r => r.class).filter(Boolean))].sort();
+
+  select.innerHTML = '<option value="all">All Classes</option>';
+
+  classes.forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = cls;
+    select.appendChild(opt);
+  });
+}
+
+   function getFilteredResults() {
+  const classFilter = $('leaderboard-class-filter').value;
+  const difficultyFilter = $('leaderboard-difficulty-filter').value;
+
+  const filtered = allResults.filter(item => {
+    const classMatch = classFilter === 'all' || item.class === classFilter;
+    const difficultyMatch = difficultyFilter === 'all' || item.difficulty === difficultyFilter;
+    return classMatch && difficultyMatch;
+  });
+
+  const bestByStudent = new Map();
+
+  filtered.forEach(item => {
+    const key = `${String(item.name || '').trim().toLowerCase()}__${String(item.class || '').trim().toLowerCase()}__${String(item.difficulty || '').trim().toLowerCase()}`;
+    const current = bestByStudent.get(key);
+
+    if (!current) {
+      bestByStudent.set(key, item);
+      return;
     }
 
-    function getFilteredResults() {
-      const classFilter = $('leaderboard-class-filter').value;
-      const difficultyFilter = $('leaderboard-difficulty-filter').value;
+    const itemScore = Number(item.score || 0);
+    const currentScore = Number(current.score || 0);
+    const itemAccuracy = Number(item.accuracy || 0);
+    const currentAccuracy = Number(current.accuracy || 0);
+    const itemTime = new Date(item.timestamp || 0).getTime();
+    const currentTime = new Date(current.timestamp || 0).getTime();
 
-      const onlyGameResults = allResults.filter(item => item && item.type === 'multiplication_result');
-
-      const filtered = onlyGameResults.filter(item => {
-        const classMatch = classFilter === 'all' || item.studentClass === classFilter;
-        const difficultyMatch = difficultyFilter === 'all' || item.difficulty === difficultyFilter;
-        return classMatch && difficultyMatch;
-      });
-
-      const bestByStudent = new Map();
-      filtered.forEach(item => {
-        const key = `${String(item.name || '').trim().toLowerCase()}__${String(item.studentClass || '').trim().toLowerCase()}__${String(item.difficulty || '').trim().toLowerCase()}`;
-        const current = bestByStudent.get(key);
-        if (!current) {
-          bestByStudent.set(key, item);
-          return;
-        }
-        const itemScore = Number(item.score || 0);
-        const currentScore = Number(current.score || 0);
-        const itemAccuracy = Number(item.accuracy || 0);
-        const currentAccuracy = Number(current.accuracy || 0);
-        const itemTime = new Date(item.timestamp || 0).getTime();
-        const currentTime = new Date(current.timestamp || 0).getTime();
-
-        if (
-          itemScore > currentScore ||
-          (itemScore === currentScore && itemAccuracy > currentAccuracy) ||
-          (itemScore === currentScore && itemAccuracy === currentAccuracy && itemTime > currentTime)
-        ) {
-          bestByStudent.set(key, item);
-        }
-      });
-
-      return [...bestByStudent.values()].sort((a, b) => {
-        const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
-        if (scoreDiff !== 0) return scoreDiff;
-        const accuracyDiff = Number(b.accuracy || 0) - Number(a.accuracy || 0);
-        if (accuracyDiff !== 0) return accuracyDiff;
-        return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
-      });
+    if (
+      itemScore > currentScore ||
+      (itemScore === currentScore && itemAccuracy > currentAccuracy) ||
+      (itemScore === currentScore && itemAccuracy === currentAccuracy && itemTime > currentTime)
+    ) {
+      bestByStudent.set(key, item);
     }
+  });
+
+  return [...bestByStudent.values()].sort((a, b) => {
+    const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const accuracyDiff = Number(b.accuracy || 0) - Number(a.accuracy || 0);
+    if (accuracyDiff !== 0) return accuracyDiff;
+
+    return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+  });
+}
 
     function renderLeaderboard() {
       const tbody = $('leaderboard-body');
